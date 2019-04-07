@@ -1,0 +1,101 @@
+<html>
+
+<head>
+    <script src="p5.min.js"></script>
+    <script src="p5.collide2D.min.js"></script>
+    <style>
+        canvas {
+            position: absolute;
+            top: 10px;
+            left: 10vw;
+        }
+    </style>
+    <script>
+        var gridX = [];
+        var gridY = [];
+        var gridSize = 20;
+        var cellCountX = 30;
+        var cellCountY = 30;
+        var w = (gridSize * cellCountX) + 1;
+        var h = (gridSize * cellCountY) + 1;
+        var showGrid = true;
+        var oneTime = 0;
+        var gamePhase = -2;
+        var baseGamePhase = -3;
+
+        var cursorX = 0;
+        var cursorY = 0;
+
+        var isStartPlaced = false;
+
+        var pathways = new pathways();
+        var startPoint = new startPoint();
+        var endPoint = new endPoint();
+
+        function setup() {
+            createCanvas(w, h);
+        }
+
+        function draw() {
+            background(220);
+            for (oneTime; oneTime < h - 1; oneTime += gridSize) { //setup position of grid
+                gridY.push(oneTime);
+                for (var ii = 0; ii < w; ii += gridSize) {
+                    gridX.push(ii);
+                }
+            }
+            for (var y = 0; y < cellCountY; y++) { //show grid
+                if (mouseY >= gridY[y] && (mouseY <= gridY[y + 1] || mouseY <= gridY[y])) {
+                    cursorY = y;
+                }
+                for (var x = 0; x < cellCountX; x++) {
+                    if (mouseX >= gridX[x] && mouseX <= gridX[x + 1]) {
+                        cursorX = x;
+                    }
+                    if (showGrid === true) {
+                        stroke(190);
+                        strokeWeight(1);
+                    } else {
+                        noStroke();
+                    }
+                    noFill();
+                    if (gridX[x] === gridX[cursorX] && gridY[y] === gridY[cursorY]) {
+                        fill(55,110,55,50);
+                    }
+                    rect(gridX[x], gridY[y], gridSize, gridSize);
+                }
+            }
+            //--USE cursorX and cursorY for towers----------------------------
+
+            document.getElementById('dump').innerHTML = cursorX + " " + cursorY;
+        }
+        
+        function keyPressed() {
+            if (keyCode === 79) {
+                if (showGrid === true) {
+                    showGrid = false;
+                } else if (showGrid === false) {
+                    showGrid = true;
+                }
+            }
+        }
+
+        function startPoint() {
+            this.place = function () {
+                if (gamePhase === -2 && isStartPlaced === false) {
+
+                }
+            };
+            this.show = function () {
+
+            };
+        }
+
+    </script>
+</head>
+
+<body>
+    <p id="dump"></p>
+</body>
+
+</html>
