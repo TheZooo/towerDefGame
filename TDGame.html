@@ -3,17 +3,10 @@
 <head>
     <script src="p5.min.js"></script>
     <script src="p5.collide2D.min.js"></script>
-    <style>
-        canvas {
-            position: absolute;
-            top: 10px;
-            left: 10vw;
-        }
-    </style>
     <script>
         var gridX = [];
         var gridY = [];
-        var gridSize = 20;
+        var gridSize = 22;
         var cellCountX = 30;
         var cellCountY = 30;
         var w = (gridSize * cellCountX) + 1;
@@ -26,11 +19,11 @@
         var cursorX = 0;
         var cursorY = 0;
 
+        var startX = 0;
+        var startY = 0;
         var isStartPlaced = false;
 
-        var pathways = new pathways();
-        var startPoint = new startPoint();
-        var endPoint = new endPoint();
+        var mobStart = new mobStart();
 
         function setup() {
             createCanvas(w, h);
@@ -45,7 +38,7 @@
                 }
             }
             for (var y = 0; y < cellCountY; y++) { //show grid
-                if (mouseY >= gridY[y] && (mouseY <= gridY[y + 1] || mouseY <= gridY[y])) {
+                if (mouseY > gridY[y] && mouseY < gridY[y] + gridSize + 2) {
                     cursorY = y;
                 }
                 for (var x = 0; x < cellCountX; x++) {
@@ -60,16 +53,19 @@
                     }
                     noFill();
                     if (gridX[x] === gridX[cursorX] && gridY[y] === gridY[cursorY]) {
-                        fill(55,110,55,50);
+                        fill(55, 110, 55, 50);
                     }
                     rect(gridX[x], gridY[y], gridSize, gridSize);
                 }
             }
-            //--USE cursorX and cursorY for towers----------------------------
-
-            document.getElementById('dump').innerHTML = cursorX + " " + cursorY;
+            //----------------------------------------------------------------------------
+            if (mouseButton === LEFT && gamePhase === -2) {
+                mobStart.place();
+            }
+            mobStart.show();
+            document.getElementById('dump').innerHTML = mouseY + " " + cursorY;
         }
-        
+
         function keyPressed() {
             if (keyCode === 79) {
                 if (showGrid === true) {
@@ -80,18 +76,39 @@
             }
         }
 
-        function startPoint() {
-            this.place = function () {
+        function mobStart() {
+            this.size = 10;
+            this.centerer = gridSize/4;
+            this.place = function() {
                 if (gamePhase === -2 && isStartPlaced === false) {
-
+                    isStartPlaced = true;
+                    gamePhase++;
+                    startX = cursorX;
+                    startY = cursorY;
                 }
             };
-            this.show = function () {
-
+            this.show = function() {
+                if (isStartPlaced === true) {
+                    this.x = gridX[startX] + this.centerer;
+                    this.y = gridY[startY] + this.centerer;
+                } else {
+                    this.x = gridX[cursorX] + this.centerer;
+                    this.y = gridY[cursorY] + this.centerer;
+                }
+                stroke(0);
+                strokeWeight(1);
+                fill(125, 50, 80);
+                rect(this.x, this.y, 10, 10);
             };
         }
-
     </script>
+    <style>
+        canvas {
+            position: absolute;
+            top: 10px;
+            left: 10vw;
+        }
+    </style>
 </head>
 
 <body>
