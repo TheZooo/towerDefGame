@@ -1,0 +1,52 @@
+<html>
+    <head>
+        <script src="p5.min.js"></script>
+        <script>
+            var w = window.innerWidth;
+            var h = window.innerHeight;
+            function setup() {
+                createCanvas(w, h);
+            }
+
+
+            var x = 0;
+            var y = 0;
+            var rectWidth = 60;
+            var rectHeight = 30;
+            var rectX = 0 - (rectWidth/2);
+            var rectY = 0 - (rectHeight/2);
+
+            function draw() {
+                background(204);
+                if (keyIsDown(87)) {
+                    y -= 2;
+                }
+                if (keyIsDown(83)) {
+                    y += 2;
+                }
+                if (keyIsDown(65)) {
+                    x -= 2;
+                }
+                if (keyIsDown(68)) {
+                    x += 2;
+                }
+                translate(x/2, y/2);
+                let a = atan2(mouseY - x/2, mouseX - y/2);
+                rotate(a);
+                rect(rectX, rectY, rectWidth, rectHeight);
+            }
+
+            
+        </script>
+        <style>
+            canvas {
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+        </style>
+    </head>
+    <body>
+
+    </body>
+</html>
