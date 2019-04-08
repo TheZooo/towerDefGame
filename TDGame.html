@@ -1,18 +1,20 @@
 <html>
 
 <head>
-    <script src="p5.min.js"></script>
-    <script src="p5.collide2D.min.js"></script>
+    <script src="p5/p5.min.js"></script>
+    <script src="p5/p5.collide2D.min.js"></script>
     <script>
         var gridX = [];
         var gridY = [];
-        var gridSize = 15;
+        var gridSize = 18;
         var cellCountX = 30;
         var cellCountY = 30;
         var w = (gridSize * cellCountX) + 1;
         var h = (gridSize * cellCountY) + 1;
         var showGrid = true;
         var oneTime = 0;
+        var mouseClick = false;
+        
         var gamePhase = -2;
         var baseGamePhase = -3;
 
@@ -22,8 +24,19 @@
         var startX = 0;
         var startY = 0;
         var isStartPlaced = false;
+        
+        var endX = 0;
+        var endY = 0;
+        var isEndPlaced = false;
 
+        var pathX = [];
+        var pathY = [];
+        var pathAmt = 0;
+        var isPathConnected = false;
+        
         var mobStart = new mobStart();
+        var mobEnd = new mobEnd();
+        var pathways = new pathways();
 
         function setup() {
             createCanvas(w, h);
@@ -59,13 +72,23 @@
                 }
             }
             //----------------------------------------------------------------------------
-            if (mouseButton === LEFT && gamePhase === -2) {
+            if (mouseClick === true) {
+              if (gamePhase === -2) {
                 mobStart.place();
+              } else if (gamePhase === -1) {
+                mobEnd.place();
+              }
             }
-            mobStart.show();
-            document.getElementById('dump').innerHTML = mouseY + " " + cursorY;
+            if (isStartPlaced === true || gamePhase === -2) {
+              mobStart.show();
+            }
+            if (isEndPlaced === true || gamePhase === -1) {
+              mobEnd.show();
+            }
+            
+            document.getElementById('dump').innerHTML = pathX + " " + pathY + " " + pathAmt;
         }
-
+        //Whatever I want to put here (Hotkeys maybe)
         function keyPressed() {
             if (keyCode === 79) {
                 if (showGrid === true) {
@@ -75,16 +98,26 @@
                 }
             }
         }
-
+        //REGISTERING SINGLE CLICK
+        function mousePressed() {
+          mouseClick = true;
+        }
+        function mouseReleased() {
+          mouseClick = false;
+        }
+        //The point where mobs will spawn
         function mobStart() {
-            this.size = 10;
-            this.centerer = gridSize/4;
+            this.size = gridSize/2;
+            this.centerer = this.size;
             this.place = function() {
                 if (gamePhase === -2 && isStartPlaced === false) {
                     isStartPlaced = true;
                     gamePhase++;
                     startX = cursorX;
                     startY = cursorY;
+                    pathX.push(startX);
+                    pathY.push(startY);
+                    pathAmt++;
                 }
             };
             this.show = function() {
@@ -98,8 +131,66 @@
                 stroke(0);
                 strokeWeight(1);
                 fill(125, 50, 80);
-                rect(this.x, this.y, 10, 10);
+                ellipse(this.x, this.y, this.size);
             };
+        }
+        //The point where mobs will stop at
+        function mobEnd() {
+          this.size = gridSize/2;
+          this.centerer = this.size;
+          this.place = function() {
+            if (gamePhase === -1 && isEndPlaced === false) {
+                isEndPlaced = true;
+                gamePhase++;
+                endX = cursorX;
+                endY = cursorY;
+            }
+          };
+          this.show = function() {
+            if (isEndPlaced === true) {
+              this.x = gridX[endX] + this.centerer;
+              this.y = gridY[endY] + this.centerer;
+            } else {
+              this.x = gridX[cursorX] + this.centerer;
+              this.y = gridY[cursorY] + this.centerer;
+            }
+            stroke(0);
+            strokeWeight(1);
+            fill(50, 210, 50);
+            ellipse(this.x, this.y, this.size);
+          };
+        }
+        //Determines the direction of mobs
+        function pathways() {
+          this.size = gridSize/2;
+          this.centerer = this.size/2;
+          this.place = function() {
+            if (gamePhase === 0 && isPathConnected === false) {
+              if (pathX[pathAmt] < cellCountX && pathX[pathAmt] > 0) {
+                if (keyIsDown(65)) { //Left
+                  
+                }
+                if (keyIsDown(68)) { //Right
+                  
+                }
+              }
+              if (pathY[pathAmt] < cellCountY && pathY[pathAmt] > 0) {
+                if (keyIsDown(87)) { //Up
+                  
+                }
+                if (keyIsDown(83)) { //Down
+                  
+                }
+              }
+            }
+          };
+          this.show = function() {
+            for (var i = 0; i < pathAmt; i++) {
+              strokeWeight(0);
+              fill(110, 110, 110, 50);
+              rect(gridX[pathX[i]] + this.centerer,gridY[pathY[i]] + this.centerer,this.size,this.size);
+            }
+          }
         }
     </script>
     <style>
