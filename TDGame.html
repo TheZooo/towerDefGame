@@ -27,16 +27,16 @@
 
         function setup() {
             createCanvas(w, h);
-        }
-
-        function draw() {
-            background(220);
             for (oneTime; oneTime < h - 1; oneTime += gridSize) { //setup position of grid
                 gridY.push(oneTime);
                 for (var ii = 0; ii < w; ii += gridSize) {
                     gridX.push(ii);
                 }
             }
+        }
+
+        function draw() {
+            background(220);
             for (var y = 0; y < cellCountY; y++) { //show grid
                 if (mouseY > gridY[y] && mouseY < gridY[y] + gridSize + 2) {
                     cursorY = y;
