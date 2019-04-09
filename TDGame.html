@@ -4,6 +4,8 @@
     <script src="p5/p5.min.js"></script>
     <script src="p5/p5.collide2D.min.js"></script>
     <script>
+        //OTHER VARIABLES
+        var d = document;
         var gridX = [];
         var gridY = [];
         var gridSize = 18;
@@ -14,30 +16,40 @@
         var showGrid = true;
         var oneTime = 0;
         var mouseClick = false;
-        
-        var gamePhase = -2;
-        var baseGamePhase = -3;
-
+        var oneClickRegulator = true;
+        var difficulties = ["Impossible", "Difficult", "Hard", "Medium", "Easy", "Very Easy", "Baby Mode"];
+        var diffSetter = 0;
+        //GAME PHASES
+        var gamePhase = -3;
+        var baseGamePhase = -4;
+        //CURSOR X AND Y
         var cursorX = 0;
         var cursorY = 0;
-
+        //START POINT
         var startX = 0;
         var startY = 0;
         var isStartPlaced = false;
-        
+        //END POINT
         var endX = 0;
         var endY = 0;
         var isEndPlaced = false;
-
+        //PATH FROM START TO END
+        var oneKeyRegulator = true;
         var pathX = [];
         var pathY = [];
         var pathAmt = 0;
         var isPathConnected = false;
-        
+        //MOBS GOING FROM START TO END
+        var mobX = [];
+        var mobY = [];
+        var mobType = [];
+        var mobAmt = 0;
+        //OBJECTS
         var mobStart = new mobStart();
         var mobEnd = new mobEnd();
         var pathways = new pathways();
-
+        var mobCreep = new mobCreep();
+        //Main setup function for p5
         function setup() {
             createCanvas(w, h);
             for (oneTime; oneTime < h - 1; oneTime += gridSize) { //setup position of grid
@@ -47,7 +59,7 @@
                 }
             }
         }
-
+        //Main draw function for p5
         function draw() {
             background(220);
             for (var y = 0; y < cellCountY; y++) { //show grid
@@ -66,31 +78,54 @@
                     }
                     noFill();
                     if (gridX[x] === gridX[cursorX] && gridY[y] === gridY[cursorY]) {
-                        fill(55, 110, 55, 50);
+                      fill(55, 110, 55, 50);
                     }
                     rect(gridX[x], gridY[y], gridSize, gridSize);
                 }
             }
             //----------------------------------------------------------------------------
-            if (mouseClick === true) {
-              if (gamePhase === -2) {
-                mobStart.place();
-              } else if (gamePhase === -1) {
-                mobEnd.place();
+            if (gamePhase === -4) {
+              d.getElementById('infoPanel').innerHTML = "- This is where information for things will be placed. This tower defence game only has a map creator for your enjoyment. Hit Play";
+            }
+            if (gamePhase === -3) {
+              d.getElementById('infoPanel').innerHTML = "- Place where you want the mobs to come from (" + "Left Click" + ")";
+            }
+            if (gamePhase === -2) {
+              d.getElementById('infoPanel').innerHTML = "- Place where you want your base to be (" + "Left Click" + ")";
+            }
+            if (gamePhase === -1) {
+              d.getElementById('infoPanel').innerHTML = "- Use WASD to direct the path from the start to the end. Its up to you how long the path is";
+              d.getElementById('pathDiff').innerHTML = "Path: " + pathAmt + "Difficulty: " + difficulties[diffSetter];
+              if () //WORK ON HERE
+            }
+            //----------------------------------------------------------------------------
+            if (mouseX < w && mouseX > 0 && mouseY < h && mouseY > 0) {
+              if (mouseClick === true && oneClickRegulator === true) {
+                if (gamePhase === -3) {
+                  mobStart.place();
+                } else if (gamePhase === -2) {
+                  mobEnd.place();
+                }
+                oneClickRegulator = false;
               }
             }
-            if (isStartPlaced === true || gamePhase === -2) {
+            if (isPathConnected === false && gamePhase === -1) {
+              pathways.place();
+            }
+            if (isPathConnected === true || gamePhase === -1) {
+              pathways.show();
+            }
+            if (isStartPlaced === true || gamePhase === -3) {
               mobStart.show();
             }
-            if (isEndPlaced === true || gamePhase === -1) {
+            if (isEndPlaced === true || gamePhase === -2) {
               mobEnd.show();
             }
             
-            document.getElementById('dump').innerHTML = pathX + " " + pathY + " " + pathAmt;
         }
         //Whatever I want to put here (Hotkeys maybe)
         function keyPressed() {
-            if (keyCode === 79) {
+            if (keyCode === 79) { //Enabling and Disabling Grid with o
                 if (showGrid === true) {
                     showGrid = false;
                 } else if (showGrid === false) {
@@ -98,19 +133,24 @@
                 }
             }
         }
-        //REGISTERING SINGLE CLICK
+        //REGISTERING CLICK
         function mousePressed() {
           mouseClick = true;
         }
         function mouseReleased() {
           mouseClick = false;
+          oneClickRegulator = true;
+        }
+        //REGISTERING KEY PRESS
+        function keyReleased() {
+          oneKeyRegulator = true;
         }
         //The point where mobs will spawn
         function mobStart() {
             this.size = gridSize/2;
             this.centerer = this.size;
             this.place = function() {
-                if (gamePhase === -2 && isStartPlaced === false) {
+                if (gamePhase === -3 && isStartPlaced === false) {
                     isStartPlaced = true;
                     gamePhase++;
                     startX = cursorX;
@@ -139,7 +179,7 @@
           this.size = gridSize/2;
           this.centerer = this.size;
           this.place = function() {
-            if (gamePhase === -1 && isEndPlaced === false) {
+            if (gamePhase === -2 && isEndPlaced === false) {
                 isEndPlaced = true;
                 gamePhase++;
                 endX = cursorX;
@@ -162,48 +202,99 @@
         }
         //Determines the direction of mobs
         function pathways() {
-          this.size = gridSize/2;
-          this.centerer = this.size/2;
+          this.size = gridSize;
           this.place = function() {
-            if (gamePhase === 0 && isPathConnected === false) {
-              if (pathX[pathAmt] < cellCountX && pathX[pathAmt] > 0) {
-                if (keyIsDown(65)) { //Left
-                  
+            if (gamePhase === -1 && isPathConnected === false) {
+              if (oneKeyRegulator === true) {
+                if (keyIsDown(65) && pathX[pathAmt - 1] > 0) { //Left
+                  pathX.push(pathX[pathAmt - 1] - 1);
+                  pathY.push(pathY[pathAmt - 1]);
+                  pathAmt++;
+                  oneKeyRegulator = false;
                 }
-                if (keyIsDown(68)) { //Right
-                  
+                if (keyIsDown(68) && pathX[pathAmt - 1] < cellCountX - 1) { //Right
+                  pathX.push(pathX[pathAmt - 1] + 1);
+                  pathY.push(pathY[pathAmt - 1]);
+                  pathAmt++;
+                  oneKeyRegulator = false;
+                }
+                if (keyIsDown(87) && pathY[pathAmt - 1] > 0) { //Up
+                  pathX.push(pathX[pathAmt - 1]);
+                  pathY.push(pathY[pathAmt - 1] - 1);
+                  pathAmt++;
+                  oneKeyRegulator = false;
+                }
+                if (keyIsDown(83) && pathY[pathAmt - 1] < cellCountY - 1) { //Down
+                  pathX.push(pathX[pathAmt - 1]);
+                  pathY.push(pathY[pathAmt - 1] + 1);
+                  pathAmt++;
+                  oneKeyRegulator = false;
                 }
               }
-              if (pathY[pathAmt] < cellCountY && pathY[pathAmt] > 0) {
-                if (keyIsDown(87)) { //Up
-                  
-                }
-                if (keyIsDown(83)) { //Down
-                  
-                }
+              if (pathX[pathAmt - 1] === endX && pathY[pathAmt - 1] === endY) {
+                isPathConnected = true;
+                gamePhase++;
               }
             }
           };
           this.show = function() {
             for (var i = 0; i < pathAmt; i++) {
+              var x = pathX[i];
+              var y = pathY[i];
+              this.x = gridX[x];
+              this.y = gridY[y];
               strokeWeight(0);
-              fill(110, 110, 110, 50);
-              rect(gridX[pathX[i]] + this.centerer,gridY[pathY[i]] + this.centerer,this.size,this.size);
+              fill(80, 80, 80, 50);
+              rect(this.x,this.y,this.size,this.size);
             }
-          }
+          };
+        }
+        //This is where mobs go
+        function mobCreep() {
+          
         }
     </script>
     <style>
         canvas {
             position: absolute;
             top: 10px;
-            left: 10vw;
+            left: 200px;
+        }
+        #infoPanelTitle {
+            width: 183px;
+            height: 50px;
+            background-color: rgba(80, 80, 80, 0.5);
+            border: 2px solid rgb(0, 0, 0);
+            line-height: 60px;
+            font-size: 40px;
+            text-indent: 5px;
+            user-select: none;
+            position: absolute;
+            top: 10px;
+        }
+        #infoPanel {
+            width: 163px;
+            background-color: rgba(80,80,80,0.5);
+            border: 2px solid rgb(0,0,0);
+            overflow-wrap: break-word;
+            padding:10px;
+            text-indent: 5px;
+            font-size: 20px;
+            user-select: none;
+            position: absolute;
+            top: 67px;
+        }
+        #pathDiff {
+          
         }
     </style>
 </head>
 
 <body>
-    <p id="dump"></p>
+    <div id="infoPanelTitle">Info Panel</div>
+    <div id="infoPanel">
+      <p id="pathDiff"></p>
+    </div>
 </body>
 
 </html>
