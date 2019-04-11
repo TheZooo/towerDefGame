@@ -19,6 +19,7 @@
         var oneClickRegulator = true;
         var difficulties = ["Impossible", "Difficult", "Hard", "Medium", "Easy", "Very Easy", "Baby Mode"];
         var diffSetter = 0;
+        var selected = -1;
         //GAME PHASES
         var gamePhase = -3;
         var baseGamePhase = -4;
@@ -43,7 +44,21 @@
         var mobX = [];
         var mobY = [];
         var mobType = [];
+        var mobHealth = [];
+        var mobSpeed = [];
+        var mobSize = [];
+        var baseMobTypes = [
+            {health: 20, speed: 1, size: 10},
+            {health: 80, speed: 0.5, size: 30},
+            {health: 10, speed: 3, size: 8}
+        ];
         var mobAmt = 0;
+        var mobSetAmt = 2;
+        var mobDiffInc = 5;
+        var baseMobDiffInc = 5;
+        var mobSpawnInc = 0;
+        var mobSpawnIncCap = 20;
+        var isWaveStart = false;
         //OBJECTS
         var mobStart = new mobStart();
         var mobEnd = new mobEnd();
@@ -84,22 +99,24 @@
                 }
             }
             //----------------------------------------------------------------------------
+            if (cursorX === startX && cursorY === startY && mouseClick === true) {
+                selector = 0;
+            }
+            //----------------------------------------------------------------------------
             if (gamePhase === -4) {
-                d.getElementById('infoPanel').innerHTML =
-                    "-This is where information for things will be placed. This tower defence game only has a map creator for your enjoyment. (Hit Play)";
+                d.getElementById('infoA').innerHTML =
+                    "-This is where information for things will be placed. This tower defence game only has a functional map creator and incremental waves. See how far you can get. (Hit Play)";
             }
             if (gamePhase === -3) {
-                d.getElementById('infoPanel').innerHTML = "-Place where you want the mobs to come from. (" +
-                    "Left Click" + ")";
+                d.getElementById('infoA').innerHTML = "-Place where you want the mobs to come from. (Left Click)";
             }
             if (gamePhase === -2) {
-                d.getElementById('infoPanel').innerHTML = "-Place where you want your base to be. (" + "Left Click" +
-                    ")";
+                d.getElementById('infoA').innerHTML = "-Place where you want your base to be. (Left Click)";
             }
             if (gamePhase === -1) {
-                d.getElementById('infoPanel').innerHTML =
-                    "-Use WASD to direct the path from the start to the end. -Path: " + pathAmt +
-                    " -Difficulty: " + difficulties[diffSetter];
+                d.getElementById('infoA').innerHTML = "-Use WASD to direct the path from the start to the end.";
+                d.getElementById('infoB').innerHTML = " -Path: " + pathAmt;
+                d.getElementById('infoC').innerHTML = " -Difficulty: " + difficulties[diffSetter];
                 if (pathAmt <= 3) {
                     diffSetter = 0;
                 } else if (pathAmt > 3 && pathAmt <= 10) {
@@ -116,8 +133,15 @@
                     diffSetter = 6;
                 }
             }
-            if (gamePhase === 0) {
-                d.getElementById('infoPanel').innerHTML = "- Select things to see more info";
+            if (gamePhase >= 0) {
+                if (selected === 0) {
+
+                }
+                if (selected === -1) {
+                    d.getElementById('infoA').innerHTML = "- Select things to see more info";
+                    d.getElementById('infoB').innerHTML = "";
+                    d.getElementById('infoC').innerHTML = "";
+                }
             }
             //----------------------------------------------------------------------------
             if (mouseX < w && mouseX > 0 && mouseY < h && mouseY > 0) {
@@ -142,7 +166,6 @@
             if (isEndPlaced === true || gamePhase === -2) {
                 mobEnd.show();
             }
-
         }
         //Whatever I want to put here (Hotkeys maybe)
         function keyPressed() {
@@ -158,7 +181,6 @@
         function mousePressed() {
             mouseClick = true;
         }
-
         function mouseReleased() {
             mouseClick = false;
             oneClickRegulator = true;
@@ -201,7 +223,7 @@
             this.size = gridSize / 2;
             this.centerer = this.size;
             this.place = function () {
-                if (gamePhase === -2 && isEndPlaced === false) {
+                if (gamePhase === -2 && isEndPlaced === false && !(cursorX === startX && cursorY === startY)) {
                     isEndPlaced = true;
                     gamePhase++;
                     endX = cursorX;
@@ -271,9 +293,32 @@
                 }
             };
         }
+        //Start wave
+        function beginWave() {
+            if (isWaveStart === false && gamePhase >= 0) {
+                mobCreep.spawn();
+                gamePhase++;
+                isWaveStart = true;
+                d.getElementById('bttnWave').style.visibility = "hidden";
+            }
+        }
         //This is where mobs go
         function mobCreep() {
-
+            this.spawn = function() {
+                for (mobAmt; mobAmt < mobSetAmt; mobAmt++) {
+                    if (mobAmt === mobDiffInc) {
+                        var typeD = Math.floor(Math.random() * baseMobTypes.length);
+                    } else if (mobAmt < mobDiffInc) {
+                        var typeD = 0;
+                    }
+                    mobX.push(startX);
+                    mobY.push(startY);
+                    mobType.push(typeD);
+                    mobHealth.push(baseMobTypes[typeD].health);
+                    mobSpeed.push(baseMobTypes[typeD].speed);
+                    mobSize.push(baseMobTypes[typeD].size);
+                }
+            };
         }
     </script>
     <style>
@@ -287,9 +332,9 @@
             width: 183px;
             height: 50px;
             background-color: rgba(80, 80, 80, 0.5);
-            border: 2px solid rgb(0, 0, 0);
+            border: 1px solid rgb(0, 0, 0);
             line-height: 60px;
-            font-size: 40px;
+            font-size: 30px;
             text-indent: 5px;
             user-select: none;
             position: absolute;
@@ -299,7 +344,7 @@
         #infoPanel {
             width: 163px;
             background-color: rgba(80, 80, 80, 0.5);
-            border: 2px solid rgb(0, 0, 0);
+            border: 1px solid rgb(0, 0, 0);
             overflow-wrap: break-word;
             padding: 10px;
             text-indent: 5px;
@@ -308,12 +353,41 @@
             position: absolute;
             top: 67px;
         }
+
+        #interactPanel {
+            width: 183px;
+            height: 539px;
+            background-color: rgba(80, 80, 80, 0.5);
+            border: 1px solid rgb(0, 0, 0);
+            position: absolute;
+            left: 750px;
+            top: 10px;
+        }
+
+        #bttnWave {
+            position: absolute;
+            left: 755px;
+            top: 10px;
+        }
+
+        #dump {
+            position: absolute;
+            top: 700px;
+        }
     </style>
 </head>
 
 <body>
     <div id="infoPanelTitle">Info Panel</div>
-    <div id="infoPanel"></div>
+    <div id="infoPanel">
+        <span id="infoA"></span>
+        <p id="infoB"></p>
+        <p id="infoC"></p>
+    </div>
+    <div id="interactPanel"></div>
+    <button onclick="beginWave()" id="bttnWave">Begin Wave</button>
+
+    <h1 id="dump"></h1>
 </body>
 
 </html>
