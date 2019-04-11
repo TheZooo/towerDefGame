@@ -19,13 +19,16 @@
         var oneClickRegulator = true;
         var difficulties = ["Impossible", "Difficult", "Hard", "Medium", "Easy", "Very Easy", "Baby Mode"];
         var diffSetter = 0;
-        var selected = -1;
         //GAME PHASES
         var gamePhase = -3;
         var baseGamePhase = -4;
         //CURSOR X AND Y
         var cursorX = 0;
         var cursorY = 0;
+        var selectX = 0;
+        var selectY = 0;
+        var isSelected = false;
+        var selected = -1;
         //START POINT
         var startX = 0;
         var startY = 0;
@@ -33,6 +36,8 @@
         //END POINT
         var endX = 0;
         var endY = 0;
+        var baseHealth = 20;
+        var resetBaseHealt = 20;
         var isEndPlaced = false;
         //PATH FROM START TO END
         var oneKeyRegulator = true;
@@ -47,6 +52,7 @@
         var mobHealth = [];
         var mobSpeed = [];
         var mobSize = [];
+        var mobSteps = [];
         var baseMobTypes = [
             {health: 20, speed: 1, size: 10},
             {health: 80, speed: 0.5, size: 30},
@@ -59,11 +65,16 @@
         var mobSpawnInc = 0;
         var mobSpawnIncCap = 20;
         var isWaveStart = false;
+        var isSpawnComplete = false;
+        //VARIABLES FOR TOWERS
+        var towerX = [];
+        var towerY = [];
         //OBJECTS
         var mobStart = new mobStart();
         var mobEnd = new mobEnd();
         var pathways = new pathways();
         var mobCreep = new mobCreep();
+        var towers = new towers();
         //Main setup function for p5
         function setup() {
             createCanvas(w, h);
@@ -80,10 +91,16 @@
             for (var y = 0; y < cellCountY; y++) { //show grid
                 if (mouseY > gridY[y] && mouseY < gridY[y] + gridSize + 2) {
                     cursorY = y;
+                    if (isSelected === false) {
+                      selectY = cursorY;
+                    }
                 }
                 for (var x = 0; x < cellCountX; x++) {
                     if (mouseX >= gridX[x] && mouseX <= gridX[x + 1]) {
                         cursorX = x;
+                        if (isSelected === false) {
+                          selectX = cursorX;
+                        }
                     }
                     if (showGrid === true) {
                         stroke(190);
@@ -95,12 +112,12 @@
                     if (gridX[x] === gridX[cursorX] && gridY[y] === gridY[cursorY]) {
                         fill(55, 110, 55, 50);
                     }
+                    if (gridX[x] === gridX[selectX] && gridY[y] === gridY[selectY] && isSelected === true) {
+                      stroke(255, 232, 28);
+                      strokeWeight(2);
+                    }
                     rect(gridX[x], gridY[y], gridSize, gridSize);
                 }
-            }
-            //----------------------------------------------------------------------------
-            if (cursorX === startX && cursorY === startY && mouseClick === true) {
-                selector = 0;
             }
             //----------------------------------------------------------------------------
             if (gamePhase === -4) {
@@ -135,7 +152,7 @@
             }
             if (gamePhase >= 0) {
                 if (selected === 0) {
-
+                  
                 }
                 if (selected === -1) {
                     d.getElementById('infoA').innerHTML = "- Select things to see more info";
@@ -150,6 +167,12 @@
                         mobStart.place();
                     } else if (gamePhase === -2) {
                         mobEnd.place();
+                    } else if (gamePhase >= 0) {
+                        if (isSelected === false) {
+                          isSelected = true;
+                        } else if (isSelected === true) {
+                          isSelected = false;
+                        }
                     }
                     oneClickRegulator = false;
                 }
@@ -157,6 +180,27 @@
             if (isPathConnected === false && gamePhase === -1) {
                 pathways.place();
             }
+            //---
+            if (mobAmt === mobSetAmt) {
+              isSpawnComplete = true;
+            }
+            if (isSpawnComplete === true && mobAmt === 0) {
+                isSpawnComplete = false;
+                isWaveStart = false;
+            }
+            if (isWaveStart === true && isSpawnComplete === false) {
+              if (mobSpawnInc === mobSpawnIncCap) {
+                mobCreep.spawn();
+                mobSpawnInc = 0;
+              } else if (mobSpawnInc < mobSpawnIncCap) {
+                mobSpawnInc++;
+              }
+            }
+            if (isWaveStart === false) {
+              mobSetAmt++;
+              d.getElementById('bttnWave').style.visibility = "visible";
+            }
+            //---
             if (isPathConnected === true || gamePhase === -1) {
                 pathways.show();
             }
@@ -166,6 +210,13 @@
             if (isEndPlaced === true || gamePhase === -2) {
                 mobEnd.show();
             }
+            if (isWaveStart === true) {
+                mobCreep.show();
+                mobCreep.move();
+            }
+            
+            mobDelete();
+            d.getElementById('dump').innerHTML = baseHealth + " " + mobX;
         }
         //Whatever I want to put here (Hotkeys maybe)
         function keyPressed() {
@@ -296,7 +347,6 @@
         //Start wave
         function beginWave() {
             if (isWaveStart === false && gamePhase >= 0) {
-                mobCreep.spawn();
                 gamePhase++;
                 isWaveStart = true;
                 d.getElementById('bttnWave').style.visibility = "hidden";
@@ -305,20 +355,92 @@
         //This is where mobs go
         function mobCreep() {
             this.spawn = function() {
-                for (mobAmt; mobAmt < mobSetAmt; mobAmt++) {
-                    if (mobAmt === mobDiffInc) {
+                if (mobAmt < mobSetAmt) {
+                    if (mobSetAmt === mobDiffInc) {
                         var typeD = Math.floor(Math.random() * baseMobTypes.length);
-                    } else if (mobAmt < mobDiffInc) {
+                        mobDiffInc += baseMobDiffInc;
+                    } else if (mobSetAmt < mobDiffInc) {
                         var typeD = 0;
                     }
-                    mobX.push(startX);
-                    mobY.push(startY);
+                    mobX.push(gridX[startX]);
+                    mobY.push(gridY[startY]);
                     mobType.push(typeD);
                     mobHealth.push(baseMobTypes[typeD].health);
                     mobSpeed.push(baseMobTypes[typeD].speed);
                     mobSize.push(baseMobTypes[typeD].size);
+                    mobSteps.push(0);
+                    mobAmt++;
                 }
             };
+            this.move = function() {
+                for (var i = 0; i < mobAmt; i++) {
+                    var xDiff = Math.abs(mobX[i] - gridX[pathX[mobSteps[i] + 1]]);
+                    var yDiff = Math.abs(mobY[i] - gridY[pathY[mobSteps[i] + 1]]);
+                    
+                    if (mobX[i] < gridX[pathX[mobSteps[i] + 1]]) {
+                      if (xDiff > mobSpeed[i]) {
+                        mobX[i] += mobSpeed[i];
+                      } else {
+                        mobX[i] += xDiff;
+                      }
+                    }
+                    else if (mobX[i] > gridX[pathX[mobSteps[i] + 1]]) {
+                      if (xDiff > mobSpeed[i]) {
+                        mobX[i] -= mobSpeed[i];
+                      } else {
+                        mobX[i] -= xDiff;
+                      }
+                    }
+                    if (mobY[i] < gridY[pathY[mobSteps[i] + 1]]) {
+                      if (yDiff > mobSpeed[i]) {
+                        mobY[i] += mobSpeed[i];
+                      } else {
+                        mobY[i] += yDiff;
+                      }
+                    }
+                    else if (mobY[i] > gridY[pathY[mobSteps[i] + 1]]) {
+                      if (yDiff > mobSpeed[i]) {
+                        mobY[i] -= mobSpeed[i];
+                      } else {
+                        mobY[i] -= yDiff;
+                      }
+                    }
+                    if (xDiff === 0 && yDiff === 0) {
+                      mobSteps[i]++;
+                    }
+                    if (mobX[i] === gridX[endX] && mobY[i] === gridY[endY]) {
+                      baseHealth--;
+                    }
+                }
+            };
+            this.show = function() {
+                for (var i = 0; i < mobAmt; i++) {
+                  this.size = mobSize[i];
+                  this.centerer = gridSize/2;
+                  this.x = mobX[i] + this.centerer;
+                  this.y = mobY[i] + this.centerer;
+                  
+                  stroke(5);
+                  strokeWeight(1);
+                  fill(77, 147, 168);
+                  ellipse(this.x,this.y,this.size);
+                }
+            };
+        }
+        
+        function mobDelete() {
+          for (var i = 0; i < mobAmt; i++) {
+            if (mobX[i] === gridX[endX] && mobY[i] === gridY[endY] || mobHealth[i] <= 0) {
+              mobX.splice(i,1);
+              mobY.splice(i,1);
+              mobType.splice(i,1);
+              mobHealth.splice(i,1);
+              mobSpeed.splice(i,1);
+              mobSize.splice(i,1);
+              mobSteps.splice(i,1);
+              mobAmt--;
+            }
+          }
         }
     </script>
     <style>
@@ -368,11 +490,12 @@
             position: absolute;
             left: 755px;
             top: 10px;
+            user-select: none;
         }
 
         #dump {
             position: absolute;
-            top: 700px;
+            top: 620px;
         }
     </style>
 </head>
