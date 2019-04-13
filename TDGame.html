@@ -17,7 +17,7 @@
         var oneTime = 0;
         var mouseClick = false;
         var oneClickRegulator = true;
-        var difficulties = ["Impossible", "Difficult", "Hard", "Medium", "Easy", "Very Easy", "Baby Mode"];
+        var difficulties = ["Impossible", "Difficult", "Hard", "Medium", "Easy", "Very Easy", "Casual"];
         var diffSetter = 0;
         //GAME PHASES
         var gamePhase = -3;
@@ -54,18 +54,23 @@
         var mobSize = [];
         var mobSteps = [];
         var baseMobTypes = [
-            {health: 20, speed: 1, size: 10},
-            {health: 80, speed: 0.5, size: 30},
-            {health: 10, speed: 3, size: 8}
+            {health:20, speed:1, size:10},
+            {health:80, speed:0.5, size:30},
+            {health:10, speed:3, size:8}
         ];
         var mobAmt = 0;
+        var mobSpawnedAmt = 0;
         var mobSetAmt = 2;
-        var mobDiffInc = 5;
-        var baseMobDiffInc = 5;
+        var baseMobSetAmt = 2;
+        var mobDiffInc = 3;
+        var baseMobDiffInc = 3;
         var mobSpawnInc = 0;
         var mobSpawnIncCap = 20;
+        var mobIncInc = 5;
+        var baseMobIncInc = 5;
         var isWaveStart = false;
         var isSpawnComplete = false;
+        var isWaveComplete = false;
         //VARIABLES FOR TOWERS
         var towerX = [];
         var towerY = [];
@@ -118,6 +123,23 @@
                     }
                     rect(gridX[x], gridY[y], gridSize, gridSize);
                 }
+            }
+            //----------------------------------------------------------------------------
+            if (gamePhase >= 0 && isSelected === true) {
+                selected = 0;
+                for (var i = 0; i < pathAmt; i++) {
+                    if (selectX === pathX[i] && selectY === pathY[i]) {
+                        selected = 1;
+                    }
+                }
+                if (selectX === startX && selectY === startY) {
+                    selected = 2;
+                }
+                if (selectX === endX && selectY === endY) {
+                    selected = 3;
+                }
+            } else {
+                selected = -1;
             }
             //----------------------------------------------------------------------------
             if (gamePhase === -4) {
@@ -180,14 +202,18 @@
             if (isPathConnected === false && gamePhase === -1) {
                 pathways.place();
             }
-            //---
-            if (mobAmt === mobSetAmt) {
+            //-----------------------------------------------------------------------------
+            if (mobSpawnedAmt === mobSetAmt) {
               isSpawnComplete = true;
             }
             if (isSpawnComplete === true && mobAmt === 0) {
+                mobSpawnedAmt = 0;
                 isSpawnComplete = false;
                 isWaveStart = false;
+                isWaveComplete = true;
+                mobDiffInc = baseMobDiffInc;
             }
+            
             if (isWaveStart === true && isSpawnComplete === false) {
               if (mobSpawnInc === mobSpawnIncCap) {
                 mobCreep.spawn();
@@ -196,11 +222,22 @@
                 mobSpawnInc++;
               }
             }
-            if (isWaveStart === false) {
-              mobSetAmt++;
-              d.getElementById('bttnWave').style.visibility = "visible";
+            if (isWaveStart === false && isWaveComplete === true) {
+                mobSetAmt++;
+                if (pathAmt <= 5) {
+                    mobSpawnIncCap = 10;
+                }
+                if (mobSetAmt >= mobIncInc) {
+                    mobSpawnIncCap--;
+                    if (mobSpawnIncCap === 0) {
+                        mobSpawnIncCap = 1;
+                    }
+                }
+                mobIncInc += baseMobIncInc;
+                d.getElementById('bttnWave').style.visibility = "visible";
+                isWaveComplete = false;
             }
-            //---
+            //------------------------------------------------------------------------------
             if (isPathConnected === true || gamePhase === -1) {
                 pathways.show();
             }
@@ -216,7 +253,7 @@
             }
             
             mobDelete();
-            d.getElementById('dump').innerHTML = baseHealth + " " + mobX;
+            d.getElementById('dump').innerHTML = selected;
         }
         //Whatever I want to put here (Hotkeys maybe)
         function keyPressed() {
@@ -355,8 +392,8 @@
         //This is where mobs go
         function mobCreep() {
             this.spawn = function() {
-                if (mobAmt < mobSetAmt) {
-                    if (mobSetAmt === mobDiffInc) {
+                if (mobSpawnedAmt < mobSetAmt) {
+                    if (mobSetAmt >= mobDiffInc) {
                         var typeD = Math.floor(Math.random() * baseMobTypes.length);
                         mobDiffInc += baseMobDiffInc;
                     } else if (mobSetAmt < mobDiffInc) {
@@ -370,6 +407,7 @@
                     mobSize.push(baseMobTypes[typeD].size);
                     mobSteps.push(0);
                     mobAmt++;
+                    mobSpawnedAmt++;
                 }
             };
             this.move = function() {
@@ -427,7 +465,7 @@
                 }
             };
         }
-        
+        //Function that Deletes Mobs
         function mobDelete() {
           for (var i = 0; i < mobAmt; i++) {
             if (mobX[i] === gridX[endX] && mobY[i] === gridY[endY] || mobHealth[i] <= 0) {
@@ -442,6 +480,10 @@
             }
           }
         }
+        //TOWERS WOWOWOOWO
+        function towers() {
+
+        }
     </script>
     <style>
         canvas {
@@ -449,7 +491,6 @@
             top: 10px;
             left: 200px;
         }
-
         #infoPanelTitle {
             width: 183px;
             height: 50px;
@@ -462,7 +503,6 @@
             position: absolute;
             top: 10px;
         }
-
         #infoPanel {
             width: 163px;
             background-color: rgba(80, 80, 80, 0.5);
@@ -475,7 +515,6 @@
             position: absolute;
             top: 67px;
         }
-
         #interactPanel {
             width: 183px;
             height: 539px;
@@ -485,14 +524,12 @@
             left: 750px;
             top: 10px;
         }
-
         #bttnWave {
             position: absolute;
             left: 755px;
             top: 10px;
             user-select: none;
         }
-
         #dump {
             position: absolute;
             top: 620px;
