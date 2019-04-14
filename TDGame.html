@@ -19,8 +19,10 @@
         var oneClickRegulator = true;
         var difficulties = ["Impossible", "Difficult", "Hard", "Medium", "Easy", "Very Easy", "Casual"];
         var diffSetter = 0;
+        var startBudget = 30;
+        var budget = 30;
         //GAME PHASES
-        var gamePhase = -3;
+        var gamePhase = -4;
         var baseGamePhase = -4;
         //CURSOR X AND Y
         var cursorX = 0;
@@ -74,6 +76,18 @@
         //VARIABLES FOR TOWERS
         var towerX = [];
         var towerY = [];
+        var towerTier = [];
+        var towerDam = [];
+        var towerRange = [];
+        var towerROF = [];
+        var baseTowers = [
+            {damage: 10, range: 20, rof: 5, cost: 10},
+            {damage: 30, range: 50, rof: 20, cost: 30},
+            {damage: 2, range: 10, rof: 1, cost: 15}
+        ];
+        var towerAmt = 0;
+        var keyT = 49;
+        var keyNumSelectT = 0;
         //OBJECTS
         var mobStart = new mobStart();
         var mobEnd = new mobEnd();
@@ -89,6 +103,14 @@
                     gridX.push(ii);
                 }
             }
+        }
+        //Play Button
+        function startGame() {
+            gamePhase++;
+            d.getElementById('title').style.display = "none";
+            d.getElementById('credit').style.display = "none";
+            d.getElementById('bttnPlay').style.display = "none";
+            d.getElementById('interactPanel').style.visibility = "visible";
         }
         //Main draw function for p5
         function draw() {
@@ -124,7 +146,7 @@
                     rect(gridX[x], gridY[y], gridSize, gridSize);
                 }
             }
-            //----------------------------------------------------------------------------
+            //----------------------------------------------------------------------------Selection
             if (gamePhase >= 0 && isSelected === true) {
                 selected = 0;
                 for (var i = 0; i < pathAmt; i++) {
@@ -141,7 +163,7 @@
             } else {
                 selected = -1;
             }
-            //----------------------------------------------------------------------------
+            //----------------------------------------------------------------------------Phases and Info
             if (gamePhase === -4) {
                 d.getElementById('infoA').innerHTML =
                     "-This is where information for things will be placed. This tower defence game only has a functional map creator and incremental waves. See how far you can get. (Hit Play)";
@@ -173,16 +195,30 @@
                 }
             }
             if (gamePhase >= 0) {
+                if (selected === 3) {
+                    d.getElementById('infoA').innerHTML = "-Base";
+                    d.getElementById('infoB').innerHTML = " -Keep away the mobs";
+                }
+                if (selected === 2) {
+                    d.getElementById('infoA').innerHTML = "-Portal";
+                    d.getElementById('infoB').innerHTML = " -Mobs start here and make their way to your base";
+                }
+                if (selected === 1) {
+                    d.getElementById('infoA').innerHTML = "-Path";
+                    d.getElementById('infoB').innerHTML = " -Mobs follows the path you set";
+                    d.getElementById('infoC').innerHTML = " -You can't place turrets here";
+                }
                 if (selected === 0) {
-                  
+                    d.getElementById('infoA').innerHTML = "-Empty Space";
+                    d.getElementById('infoB').innerHTML = " -Place Turrets by pressing 1-" + baseTowers.length;
                 }
                 if (selected === -1) {
-                    d.getElementById('infoA').innerHTML = "- Select things to see more info";
+                    d.getElementById('infoA').innerHTML = "-Select things to see more info";
                     d.getElementById('infoB').innerHTML = "";
                     d.getElementById('infoC').innerHTML = "";
                 }
             }
-            //----------------------------------------------------------------------------
+            //----------------------------------------------------------------------------Placement through click
             if (mouseX < w && mouseX > 0 && mouseY < h && mouseY > 0) {
                 if (mouseClick === true && oneClickRegulator === true) {
                     if (gamePhase === -3) {
@@ -201,12 +237,16 @@
             }
             if (isPathConnected === false && gamePhase === -1) {
                 pathways.place();
+                if (gamePhase === 0) {
+                    d.getElementById('bttnWave').style.visibility = "visible";
+                }
             }
-            //-----------------------------------------------------------------------------
+            //-----------------------------------------------------------------------------Mobs
             if (mobSpawnedAmt === mobSetAmt) {
               isSpawnComplete = true;
             }
             if (isSpawnComplete === true && mobAmt === 0) {
+                budget += 20;
                 mobSpawnedAmt = 0;
                 isSpawnComplete = false;
                 isWaveStart = false;
@@ -237,7 +277,7 @@
                 d.getElementById('bttnWave').style.visibility = "visible";
                 isWaveComplete = false;
             }
-            //------------------------------------------------------------------------------
+            //------------------------------------------------------------------------------Show
             if (isPathConnected === true || gamePhase === -1) {
                 pathways.show();
             }
@@ -251,8 +291,14 @@
                 mobCreep.show();
                 mobCreep.move();
             }
-            
             mobDelete();
+            var wave = gamePhase;
+            if (wave < 0) {
+                wave = 0;
+            }
+            d.getElementById('waves').innerHTML = "Wave - " + wave;
+            d.getElementById('budget').innerHTML = "Points - " + budget;
+            d.getElementById('lives').innerHTML = "Lives - " + baseHealth;
             d.getElementById('dump').innerHTML = selected;
         }
         //Whatever I want to put here (Hotkeys maybe)
@@ -482,7 +528,30 @@
         }
         //TOWERS WOWOWOOWO
         function towers() {
-
+            this.place = function() {
+                for (var i = 0; i < baseTowers.length; i++) {
+                    if (isSelected === true && budget > baseTowers[i].cost && selected === 0) {
+                        if (i === 0) {
+                            keyT = 49;
+                            keyNumSelectT = 0;
+                        }
+                        if (keyIsDown(keyT)) {
+                            towerX.push(selectX);
+                            towerY.push(selectY);
+                            towerTier.push(0);
+                            towerDam.push(baseTowers[i].damage);
+                            towerRange.push(baseTowers[i].range);
+                            towerROF.push(baseTowers[i].rof);
+                            towerAmt++;
+                            budget -= baseTowers[i].cost;
+                            isSelected = false;
+                        }
+                        keyNumSelectT++;
+                        keyT++;
+                    }
+                }
+                
+            };
         }
     </script>
     <style>
@@ -490,6 +559,27 @@
             position: absolute;
             top: 10px;
             left: 200px;
+        }
+        #title {
+            position: absolute;
+            top: 40px;
+            left: 210px;
+            z-index: 1;
+            user-select: none;
+        }
+        #credit {
+            position: absolute;
+            top: 80px;
+            left: 210px;
+            z-index: 1;
+            user-select: none;
+        }
+        #bttnPlay {
+            position: absolute;
+            top: 122px;
+            left: 210px;
+            z-index: 1;
+            user-select: none;
         }
         #infoPanelTitle {
             width: 183px;
@@ -520,16 +610,40 @@
             height: 539px;
             background-color: rgba(80, 80, 80, 0.5);
             border: 1px solid rgb(0, 0, 0);
+            visibility: hidden;
             position: absolute;
             left: 750px;
             top: 10px;
         }
         #bttnWave {
+            visibility: hidden;
             position: absolute;
-            left: 755px;
-            top: 10px;
+            left: 5px;
+            top: 510px;
             user-select: none;
         }
+        #waves {
+            position: absolute;
+            font-size: 30px;
+            top: -20px;
+            left: 5px;
+            user-select: none;
+        }
+        #budget {
+            position: absolute;
+            font-size: 30px;
+            top: 20px;
+            left: 5px;
+            user-select: none;
+        }
+        #lives {
+            position: absolute;
+            font-size: 30px;
+            top: 60px;
+            left: 5px;
+            user-select: none;
+        }
+
         #dump {
             position: absolute;
             top: 620px;
@@ -538,15 +652,21 @@
 </head>
 
 <body>
+    <h1 id="title">Tower Defense Concept</h1>
+    <p id="credit">Coded by Eric Zhou</p>
+    <button id="bttnPlay" onclick="startGame()">Play</button>
     <div id="infoPanelTitle">Info Panel</div>
     <div id="infoPanel">
         <span id="infoA"></span>
         <p id="infoB"></p>
         <p id="infoC"></p>
     </div>
-    <div id="interactPanel"></div>
-    <button onclick="beginWave()" id="bttnWave">Begin Wave</button>
-
+    <div id="interactPanel">
+        <p id="waves"></p>
+        <p id="budget"></p>
+        <p id="lives"></p>
+        <button onclick="beginWave()" id="bttnWave">Begin Wave</button>
+    </div>
     <h1 id="dump"></h1>
 </body>
 
