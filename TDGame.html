@@ -19,8 +19,8 @@
         var oneClickRegulator = true;
         var difficulties = ["Impossible", "Difficult", "Hard", "Medium", "Easy", "Very Easy", "Casual"];
         var diffSetter = 0;
-        var startBudget = 30;
-        var budget = 30;
+        var startBudget = 20;
+        var budget = 20;
         //GAME PHASES
         var gamePhase = -4;
         var baseGamePhase = -4;
@@ -77,16 +77,16 @@
         var towerX = [];
         var towerY = [];
         var towerTier = [];
+        var towerType = [];
         var towerDam = [];
         var towerRange = [];
         var towerROF = [];
         var baseTowers = [
-            {damage: 10, range: 20, rof: 5, cost: 10},
-            {damage: 30, range: 50, rof: 20, cost: 30},
-            {damage: 2, range: 10, rof: 1, cost: 15}
+            {damage: 10, range: 130, rof: 5, cost: 10},
+            {damage: 30, range: 200, rof: 20, cost: 30},
+            {damage: 2, range: 80, rof: 1, cost: 15}
         ];
         var towerAmt = 0;
-        var keyT = 49;
         var keyNumSelectT = 0;
         //OBJECTS
         var mobStart = new mobStart();
@@ -154,6 +154,13 @@
                         selected = 1;
                     }
                 }
+                for (var ii = 0; ii < towerAmt; ii++) {
+                    for (var iii = 0; iii < baseTowers.length; iii++) {
+                        if (towerType[ii] === iii && towerX[ii] === selectX && towerY[ii] === selectY) {
+                            selected = 99 + iii;
+                        }
+                    }
+                }
                 if (selectX === startX && selectY === startY) {
                     selected = 2;
                 }
@@ -195,6 +202,24 @@
                 }
             }
             if (gamePhase >= 0) {
+                if (selected === 99 + 0) {
+                    d.getElementById('infoA').innerHTML = "-Base Turret";
+                    d.getElementById('infoB').innerHTML = " -Damage: " + baseTowers[0].damage;
+                    d.getElementById('infoC').innerHTML = " -Range: " + baseTowers[0].range;
+                    d.getElementById('infoD').innerHTML = " -ROF: " + baseTowers[0].rof;
+                }
+                if (selected === 99 + 1) {
+                    d.getElementById('infoA').innerHTML = "-Sniper Turret";
+                    d.getElementById('infoB').innerHTML = " -Damage: " + baseTowers[1].damage;
+                    d.getElementById('infoC').innerHTML = " -Range: " + baseTowers[1].range;
+                    d.getElementById('infoD').innerHTML = " -ROF: " + baseTowers[1].rof;
+                }
+                if (selected === 99 + 2) {
+                    d.getElementById('infoA').innerHTML = "-Sprayer Turret";
+                    d.getElementById('infoB').innerHTML = " -Damage: " + baseTowers[2].damage;
+                    d.getElementById('infoC').innerHTML = " -Range: " + baseTowers[2].range;
+                    d.getElementById('infoD').innerHTML = " -ROF: " + baseTowers[2].rof;
+                }
                 if (selected === 3) {
                     d.getElementById('infoA').innerHTML = "-Base";
                     d.getElementById('infoB').innerHTML = " -Keep away the mobs";
@@ -216,6 +241,7 @@
                     d.getElementById('infoA').innerHTML = "-Select things to see more info";
                     d.getElementById('infoB').innerHTML = "";
                     d.getElementById('infoC').innerHTML = "";
+                    d.getElementById('infoD').innerHTML = "";
                 }
             }
             //----------------------------------------------------------------------------Placement through click
@@ -291,6 +317,9 @@
                 mobCreep.show();
                 mobCreep.move();
             }
+            if (gamePhase >= 0) {
+                towers.show();
+            }
             mobDelete();
             var wave = gamePhase;
             if (wave < 0) {
@@ -299,7 +328,7 @@
             d.getElementById('waves').innerHTML = "Wave - " + wave;
             d.getElementById('budget').innerHTML = "Points - " + budget;
             d.getElementById('lives').innerHTML = "Lives - " + baseHealth;
-            d.getElementById('dump').innerHTML = selected;
+            d.getElementById('dump').innerHTML = selected + " " + towerType;
         }
         //Whatever I want to put here (Hotkeys maybe)
         function keyPressed() {
@@ -308,6 +337,12 @@
                     showGrid = false;
                 } else if (showGrid === false) {
                     showGrid = true;
+                }
+            }
+            for (var i = 0; i < baseTowers.length; i++) {
+                if (keyCode === 49 + i) {
+                    keyNumSelectT = i;
+                    towers.place();
                 }
             }
         }
@@ -528,29 +563,41 @@
         }
         //TOWERS WOWOWOOWO
         function towers() {
+            this.size = 5;
+            this.centerer = gridSize/2;
             this.place = function() {
-                for (var i = 0; i < baseTowers.length; i++) {
-                    if (isSelected === true && budget > baseTowers[i].cost && selected === 0) {
-                        if (i === 0) {
-                            keyT = 49;
-                            keyNumSelectT = 0;
-                        }
-                        if (keyIsDown(keyT)) {
-                            towerX.push(selectX);
-                            towerY.push(selectY);
-                            towerTier.push(0);
-                            towerDam.push(baseTowers[i].damage);
-                            towerRange.push(baseTowers[i].range);
-                            towerROF.push(baseTowers[i].rof);
-                            towerAmt++;
-                            budget -= baseTowers[i].cost;
-                            isSelected = false;
-                        }
-                        keyNumSelectT++;
-                        keyT++;
+                if (isSelected === true && budget >= baseTowers[keyNumSelectT].cost && selected === 0) {
+                    towerX.push(selectX);
+                    towerY.push(selectY);
+                    towerTier.push(0);
+                    towerType.push(keyNumSelectT);
+                    towerDam.push(baseTowers[keyNumSelectT].damage);
+                    towerRange.push(baseTowers[keyNumSelectT].range);
+                    towerROF.push(baseTowers[keyNumSelectT].rof);
+                    towerAmt++;
+                    budget -= baseTowers[keyNumSelectT].cost;
+                    isSelected = false;
+                }
+            };
+            this.show = function() {
+                for (var i = 0; i < towerAmt; i++) {
+                    this.x = gridX[towerX[i]] + this.centerer;
+                    this.y = gridY[towerY[i]] + this.centerer;
+                    fill(255,0,0);
+                    stroke(0);
+                    strokeWeight(1);
+                    ellipse(this.x,this.y,this.size);
+                    var type = towerType[i];
+                    if (isSelected === true && selected === 99 + type && selectX === towerX[i] && selectY === towerY[i]) {
+                        fill(114,114,114,80);
+                        strokeWeight(0);
+                        ellipse(this.x,this.y,baseTowers[type].range);
+                    } else {
+                        noFill();
+                        noStroke()
+                        ellipse(this.x,this.y,baseTowers[type].range);
                     }
                 }
-                
             };
         }
     </script>
@@ -660,6 +707,7 @@
         <span id="infoA"></span>
         <p id="infoB"></p>
         <p id="infoC"></p>
+        <p id="infoD"></p>
     </div>
     <div id="interactPanel">
         <p id="waves"></p>
