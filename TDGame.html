@@ -328,7 +328,6 @@
             d.getElementById('waves').innerHTML = "Wave - " + wave;
             d.getElementById('budget').innerHTML = "Points - " + budget;
             d.getElementById('lives').innerHTML = "Lives - " + baseHealth;
-            d.getElementById('dump').innerHTML = selected + " " + towerType;
         }
         //Whatever I want to put here (Hotkeys maybe)
         function keyPressed() {
@@ -599,6 +598,13 @@
                     }
                 }
             };
+            this.detect = function() {
+                for (var i = 0; i < mobAmt; i++) {
+                    var tx = gridX[towerX[i]] + this.centerer;
+                    var ty = gridY[towerY[i]] + this.centerer;
+                    var detect = collide
+                }
+            }
         }
     </script>
     <style>
