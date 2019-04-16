@@ -21,6 +21,7 @@
         var diffSetter = 0;
         var startBudget = 20;
         var budget = 20;
+        var isGameStart = false;
         //GAME PHASES
         var gamePhase = -4;
         var baseGamePhase = -4;
@@ -39,7 +40,7 @@
         var endX = 0;
         var endY = 0;
         var baseHealth = 20;
-        var resetBaseHealt = 20;
+        var resetBaseHealth = 20;
         var isEndPlaced = false;
         //PATH FROM START TO END
         var oneKeyRegulator = true;
@@ -54,11 +55,23 @@
         var mobHealth = [];
         var mobSpeed = [];
         var mobSize = [];
+        var mobDetect = [];
         var mobSteps = [];
-        var baseMobTypes = [
-            {health:20, speed:1, size:10},
-            {health:80, speed:0.5, size:30},
-            {health:10, speed:3, size:8}
+        var baseMobTypes = [{
+                health: 20,
+                speed: 2,
+                size: 10
+            },
+            {
+                health: 80,
+                speed: 1,
+                size: 30
+            },
+            {
+                health: 10,
+                speed: 3,
+                size: 8
+            }
         ];
         var mobAmt = 0;
         var mobSpawnedAmt = 0;
@@ -80,14 +93,31 @@
         var towerType = [];
         var towerDam = [];
         var towerRange = [];
+        var towerROFInc = [];
         var towerROF = [];
-        var baseTowers = [
-            {damage: 10, range: 130, rof: 5, cost: 10},
-            {damage: 30, range: 200, rof: 20, cost: 30},
-            {damage: 2, range: 80, rof: 1, cost: 15}
+        var towerDetect = [];
+        var baseTowers = [{
+                damage: 5,
+                range: 150,
+                rof: 20,
+                cost: 10
+            },
+            {
+                damage: 30,
+                range: 200,
+                rof: 50,
+                cost: 30
+            },
+            {
+                damage: 2,
+                range: 100,
+                rof: 5,
+                cost: 15
+            }
         ];
         var towerAmt = 0;
         var keyNumSelectT = 0;
+        var detect = false;
         //OBJECTS
         var mobStart = new mobStart();
         var mobEnd = new mobEnd();
@@ -107,10 +137,48 @@
         //Play Button
         function startGame() {
             gamePhase++;
+            isGameStart = true;
             d.getElementById('title').style.display = "none";
             d.getElementById('credit').style.display = "none";
             d.getElementById('bttnPlay').style.display = "none";
             d.getElementById('interactPanel').style.visibility = "visible";
+        }
+        //Restart Button 
+        function restart() {
+            d.getElementById('title').style.display = "block";
+            d.getElementById('credit').style.display = "block";
+            d.getElementById('bttnPlay').style.display = "block";
+            d.getElementById('endTitle').style.visibility = "hidden";
+            d.getElementById('bttnRestart').style.visibiliy = "hidden";
+            gamePhase = baseGamePhase;
+            budget = startBudget;
+            baseHealth = resetBaseHealth;
+            startX = 0;
+            startY = 0;
+            isStartPlaced = false;
+            endX = 0;
+            endY = 0;
+            isEndPlaced = false;
+            for (var i = 0; i < pathAmt; i++) {
+                pathX.pop();
+                pathY.pop();
+            }
+            pathAmt = 0;
+            isPathConnected = false;
+            for (var ii = 0; ii < mobAmt; ii++) {
+                mobX.pop();
+                mobY.pop();
+                mobType.pop();
+                mobHealth.pop();
+                mobSpeed.pop();
+                mobSize.pop();
+                mobDetect.pop();
+                mobSteps.pop();
+            }
+            mobSetAmt = baseMobSetAmt;
+            isWaveStart = false;
+            isSpawnComplete = false;
+            isWaveComplete = false;
         }
         //Main draw function for p5
         function draw() {
@@ -119,14 +187,14 @@
                 if (mouseY > gridY[y] && mouseY < gridY[y] + gridSize + 2) {
                     cursorY = y;
                     if (isSelected === false) {
-                      selectY = cursorY;
+                        selectY = cursorY;
                     }
                 }
                 for (var x = 0; x < cellCountX; x++) {
                     if (mouseX >= gridX[x] && mouseX <= gridX[x + 1]) {
                         cursorX = x;
                         if (isSelected === false) {
-                          selectX = cursorX;
+                            selectX = cursorX;
                         }
                     }
                     if (showGrid === true) {
@@ -140,36 +208,42 @@
                         fill(55, 110, 55, 50);
                     }
                     if (gridX[x] === gridX[selectX] && gridY[y] === gridY[selectY] && isSelected === true) {
-                      stroke(255, 232, 28);
-                      strokeWeight(2);
+                        stroke(255, 232, 28);
+                        strokeWeight(2);
                     }
                     rect(gridX[x], gridY[y], gridSize, gridSize);
                 }
             }
+            if (baseHealth <= 0) {
+                isGameStart = false;
+            }
             //----------------------------------------------------------------------------Selection
-            if (gamePhase >= 0 && isSelected === true) {
-                selected = 0;
-                for (var i = 0; i < pathAmt; i++) {
-                    if (selectX === pathX[i] && selectY === pathY[i]) {
-                        selected = 1;
-                    }
-                }
-                for (var ii = 0; ii < towerAmt; ii++) {
-                    for (var iii = 0; iii < baseTowers.length; iii++) {
-                        if (towerType[ii] === iii && towerX[ii] === selectX && towerY[ii] === selectY) {
-                            selected = 99 + iii;
+            if (isGameStart === true) {
+                if (gamePhase >= 0 && isSelected === true) {
+                    selected = 0;
+                    for (var i = 0; i < pathAmt; i++) {
+                        if (selectX === pathX[i] && selectY === pathY[i]) {
+                            selected = 1;
                         }
                     }
+                    for (var ii = 0; ii < towerAmt; ii++) {
+                        for (var iii = 0; iii < baseTowers.length; iii++) {
+                            if (towerType[ii] === iii && towerX[ii] === selectX && towerY[ii] === selectY) {
+                                selected = 99 + iii;
+                            }
+                        }
+                    }
+                    if (selectX === startX && selectY === startY) {
+                        selected = 2;
+                    }
+                    if (selectX === endX && selectY === endY) {
+                        selected = 3;
+                    }
+                } else {
+                    selected = -1;
                 }
-                if (selectX === startX && selectY === startY) {
-                    selected = 2;
-                }
-                if (selectX === endX && selectY === endY) {
-                    selected = 3;
-                }
-            } else {
-                selected = -1;
             }
+
             //----------------------------------------------------------------------------Phases and Info
             if (gamePhase === -4) {
                 d.getElementById('infoA').innerHTML =
@@ -202,47 +276,50 @@
                 }
             }
             if (gamePhase >= 0) {
-                if (selected === 99 + 0) {
-                    d.getElementById('infoA').innerHTML = "-Base Turret";
-                    d.getElementById('infoB').innerHTML = " -Damage: " + baseTowers[0].damage;
-                    d.getElementById('infoC').innerHTML = " -Range: " + baseTowers[0].range;
-                    d.getElementById('infoD').innerHTML = " -ROF: " + baseTowers[0].rof;
+                if (isGameStart === true) {
+                    if (selected === 99 + 0) {
+                        d.getElementById('infoA').innerHTML = "-Base Turret";
+                        d.getElementById('infoB').innerHTML = " -Damage: " + baseTowers[0].damage;
+                        d.getElementById('infoC').innerHTML = " -Range: " + baseTowers[0].range;
+                        d.getElementById('infoD').innerHTML = " -ROF: " + baseTowers[0].rof;
+                    }
+                    if (selected === 99 + 1) {
+                        d.getElementById('infoA').innerHTML = "-Sniper Turret";
+                        d.getElementById('infoB').innerHTML = " -Damage: " + baseTowers[1].damage;
+                        d.getElementById('infoC').innerHTML = " -Range: " + baseTowers[1].range;
+                        d.getElementById('infoD').innerHTML = " -ROF: " + baseTowers[1].rof;
+                    }
+                    if (selected === 99 + 2) {
+                        d.getElementById('infoA').innerHTML = "-Sprayer Turret";
+                        d.getElementById('infoB').innerHTML = " -Damage: " + baseTowers[2].damage;
+                        d.getElementById('infoC').innerHTML = " -Range: " + baseTowers[2].range;
+                        d.getElementById('infoD').innerHTML = " -ROF: " + baseTowers[2].rof;
+                    }
+                    if (selected === 3) {
+                        d.getElementById('infoA').innerHTML = "-Base";
+                        d.getElementById('infoB').innerHTML = " -Keep away the mobs";
+                    }
+                    if (selected === 2) {
+                        d.getElementById('infoA').innerHTML = "-Portal";
+                        d.getElementById('infoB').innerHTML = " -Mobs start here and make their way to your base";
+                    }
+                    if (selected === 1) {
+                        d.getElementById('infoA').innerHTML = "-Path";
+                        d.getElementById('infoB').innerHTML = " -Mobs follows the path you set";
+                        d.getElementById('infoC').innerHTML = " -You can't place turrets here";
+                    }
+                    if (selected === 0) {
+                        d.getElementById('infoA').innerHTML = "-Empty Space";
+                        d.getElementById('infoB').innerHTML = " -Place Turrets by pressing 1-" + baseTowers.length;
+                    }
+                    if (selected === -1) {
+                        d.getElementById('infoA').innerHTML = "-Select things to see more info";
+                        d.getElementById('infoB').innerHTML = "";
+                        d.getElementById('infoC').innerHTML = "";
+                        d.getElementById('infoD').innerHTML = "";
+                    }
                 }
-                if (selected === 99 + 1) {
-                    d.getElementById('infoA').innerHTML = "-Sniper Turret";
-                    d.getElementById('infoB').innerHTML = " -Damage: " + baseTowers[1].damage;
-                    d.getElementById('infoC').innerHTML = " -Range: " + baseTowers[1].range;
-                    d.getElementById('infoD').innerHTML = " -ROF: " + baseTowers[1].rof;
-                }
-                if (selected === 99 + 2) {
-                    d.getElementById('infoA').innerHTML = "-Sprayer Turret";
-                    d.getElementById('infoB').innerHTML = " -Damage: " + baseTowers[2].damage;
-                    d.getElementById('infoC').innerHTML = " -Range: " + baseTowers[2].range;
-                    d.getElementById('infoD').innerHTML = " -ROF: " + baseTowers[2].rof;
-                }
-                if (selected === 3) {
-                    d.getElementById('infoA').innerHTML = "-Base";
-                    d.getElementById('infoB').innerHTML = " -Keep away the mobs";
-                }
-                if (selected === 2) {
-                    d.getElementById('infoA').innerHTML = "-Portal";
-                    d.getElementById('infoB').innerHTML = " -Mobs start here and make their way to your base";
-                }
-                if (selected === 1) {
-                    d.getElementById('infoA').innerHTML = "-Path";
-                    d.getElementById('infoB').innerHTML = " -Mobs follows the path you set";
-                    d.getElementById('infoC').innerHTML = " -You can't place turrets here";
-                }
-                if (selected === 0) {
-                    d.getElementById('infoA').innerHTML = "-Empty Space";
-                    d.getElementById('infoB').innerHTML = " -Place Turrets by pressing 1-" + baseTowers.length;
-                }
-                if (selected === -1) {
-                    d.getElementById('infoA').innerHTML = "-Select things to see more info";
-                    d.getElementById('infoB').innerHTML = "";
-                    d.getElementById('infoC').innerHTML = "";
-                    d.getElementById('infoD').innerHTML = "";
-                }
+
             }
             //----------------------------------------------------------------------------Placement through click
             if (mouseX < w && mouseX > 0 && mouseY < h && mouseY > 0) {
@@ -253,9 +330,9 @@
                         mobEnd.place();
                     } else if (gamePhase >= 0) {
                         if (isSelected === false) {
-                          isSelected = true;
+                            isSelected = true;
                         } else if (isSelected === true) {
-                          isSelected = false;
+                            isSelected = false;
                         }
                     }
                     oneClickRegulator = false;
@@ -268,66 +345,85 @@
                 }
             }
             //-----------------------------------------------------------------------------Mobs
-            if (mobSpawnedAmt === mobSetAmt) {
-              isSpawnComplete = true;
-            }
-            if (isSpawnComplete === true && mobAmt === 0) {
-                budget += 20;
-                mobSpawnedAmt = 0;
-                isSpawnComplete = false;
-                isWaveStart = false;
-                isWaveComplete = true;
-                mobDiffInc = baseMobDiffInc;
-            }
-            
-            if (isWaveStart === true && isSpawnComplete === false) {
-              if (mobSpawnInc === mobSpawnIncCap) {
-                mobCreep.spawn();
-                mobSpawnInc = 0;
-              } else if (mobSpawnInc < mobSpawnIncCap) {
-                mobSpawnInc++;
-              }
-            }
-            if (isWaveStart === false && isWaveComplete === true) {
-                mobSetAmt++;
-                if (pathAmt <= 5) {
-                    mobSpawnIncCap = 10;
+            if (isGameStart === true) {
+                if (mobSpawnedAmt === mobSetAmt) {
+                    isSpawnComplete = true;
                 }
-                if (mobSetAmt >= mobIncInc) {
-                    mobSpawnIncCap--;
-                    if (mobSpawnIncCap === 0) {
-                        mobSpawnIncCap = 1;
+                if (isSpawnComplete === true && mobAmt === 0) {
+                    budget += 20;
+                    mobSpawnedAmt = 0;
+                    isSpawnComplete = false;
+                    isWaveStart = false;
+                    isWaveComplete = true;
+                    mobDiffInc = baseMobDiffInc;
+                }
+
+                if (isWaveStart === true && isSpawnComplete === false) {
+                    if (mobSpawnInc === mobSpawnIncCap) {
+                        mobCreep.spawn();
+                        mobSpawnInc = 0;
+                    } else if (mobSpawnInc < mobSpawnIncCap) {
+                        mobSpawnInc++;
                     }
                 }
-                mobIncInc += baseMobIncInc;
-                d.getElementById('bttnWave').style.visibility = "visible";
-                isWaveComplete = false;
+                if (isWaveStart === false && isWaveComplete === true) {
+                    mobSetAmt++;
+                    if (pathAmt <= 5) {
+                        mobSpawnIncCap = 10;
+                    }
+                    if (mobSetAmt >= mobIncInc) {
+                        mobSpawnIncCap--;
+                        if (mobSpawnIncCap === 0) {
+                            mobSpawnIncCap = 1;
+                        }
+                    }
+                    mobIncInc += baseMobIncInc;
+                    d.getElementById('bttnWave').style.visibility = "visible";
+                    isWaveComplete = false;
+                }
             }
+
+            //------------------------------------------------------------------------------Towers
+            if (isGameStart === true) {
+                if (isWaveStart === true) {
+                    towers.detect();
+                }
+            }
+
             //------------------------------------------------------------------------------Show
-            if (isPathConnected === true || gamePhase === -1) {
-                pathways.show();
-            }
-            if (isStartPlaced === true || gamePhase === -3) {
-                mobStart.show();
-            }
-            if (isEndPlaced === true || gamePhase === -2) {
-                mobEnd.show();
-            }
-            if (isWaveStart === true) {
-                mobCreep.show();
-                mobCreep.move();
-            }
-            if (gamePhase >= 0) {
-                towers.show();
-            }
-            mobDelete();
-            var wave = gamePhase;
-            if (wave < 0) {
-                wave = 0;
+            if (isGameStart === true) {
+                if (isPathConnected === true || gamePhase === -1) {
+                    pathways.show();
+                }
+                if (isStartPlaced === true || gamePhase === -3) {
+                    mobStart.show();
+                }
+                if (isEndPlaced === true || gamePhase === -2) {
+                    mobEnd.show();
+                }
+                if (isWaveStart === true) {
+                    mobCreep.show();
+                    mobCreep.move();
+                }
+                if (gamePhase >= 0) {
+                    towers.show();
+                }
+                mobDelete();
+                var wave = gamePhase;
+                if (wave < 0) {
+                    wave = 0;
+                }
             }
             d.getElementById('waves').innerHTML = "Wave - " + wave;
             d.getElementById('budget').innerHTML = "Points - " + budget;
             d.getElementById('lives').innerHTML = "Lives - " + baseHealth;
+            //------------------------------------------------------------------------------Ending
+            if (isGameStart === false) {
+                d.getElementById('interactPanel').style.visibility = "hidden";
+                d.getElementById('endTitle').innerHTML = "You reached wave: " + gamePhase;
+                d.getElementById('endTitle').style.visibility = "visible";
+                d.getElementById('bttnRestart').style.visibiliy = "visible";
+            }
         }
         //Whatever I want to put here (Hotkeys maybe)
         function keyPressed() {
@@ -349,6 +445,7 @@
         function mousePressed() {
             mouseClick = true;
         }
+
         function mouseReleased() {
             mouseClick = false;
             oneClickRegulator = true;
@@ -471,7 +568,7 @@
         }
         //This is where mobs go
         function mobCreep() {
-            this.spawn = function() {
+            this.spawn = function () {
                 if (mobSpawnedAmt < mobSetAmt) {
                     if (mobSetAmt >= mobDiffInc) {
                         var typeD = Math.floor(Math.random() * baseMobTypes.length);
@@ -490,81 +587,79 @@
                     mobSpawnedAmt++;
                 }
             };
-            this.move = function() {
+            this.move = function () {
                 for (var i = 0; i < mobAmt; i++) {
                     var xDiff = Math.abs(mobX[i] - gridX[pathX[mobSteps[i] + 1]]);
                     var yDiff = Math.abs(mobY[i] - gridY[pathY[mobSteps[i] + 1]]);
-                    
+
                     if (mobX[i] < gridX[pathX[mobSteps[i] + 1]]) {
-                      if (xDiff > mobSpeed[i]) {
-                        mobX[i] += mobSpeed[i];
-                      } else {
-                        mobX[i] += xDiff;
-                      }
-                    }
-                    else if (mobX[i] > gridX[pathX[mobSteps[i] + 1]]) {
-                      if (xDiff > mobSpeed[i]) {
-                        mobX[i] -= mobSpeed[i];
-                      } else {
-                        mobX[i] -= xDiff;
-                      }
+                        if (xDiff > mobSpeed[i]) {
+                            mobX[i] += mobSpeed[i];
+                        } else {
+                            mobX[i] += xDiff;
+                        }
+                    } else if (mobX[i] > gridX[pathX[mobSteps[i] + 1]]) {
+                        if (xDiff > mobSpeed[i]) {
+                            mobX[i] -= mobSpeed[i];
+                        } else {
+                            mobX[i] -= xDiff;
+                        }
                     }
                     if (mobY[i] < gridY[pathY[mobSteps[i] + 1]]) {
-                      if (yDiff > mobSpeed[i]) {
-                        mobY[i] += mobSpeed[i];
-                      } else {
-                        mobY[i] += yDiff;
-                      }
-                    }
-                    else if (mobY[i] > gridY[pathY[mobSteps[i] + 1]]) {
-                      if (yDiff > mobSpeed[i]) {
-                        mobY[i] -= mobSpeed[i];
-                      } else {
-                        mobY[i] -= yDiff;
-                      }
+                        if (yDiff > mobSpeed[i]) {
+                            mobY[i] += mobSpeed[i];
+                        } else {
+                            mobY[i] += yDiff;
+                        }
+                    } else if (mobY[i] > gridY[pathY[mobSteps[i] + 1]]) {
+                        if (yDiff > mobSpeed[i]) {
+                            mobY[i] -= mobSpeed[i];
+                        } else {
+                            mobY[i] -= yDiff;
+                        }
                     }
                     if (xDiff === 0 && yDiff === 0) {
-                      mobSteps[i]++;
+                        mobSteps[i]++;
                     }
                     if (mobX[i] === gridX[endX] && mobY[i] === gridY[endY]) {
-                      baseHealth--;
+                        baseHealth--;
                     }
                 }
             };
-            this.show = function() {
+            this.show = function () {
                 for (var i = 0; i < mobAmt; i++) {
-                  this.size = mobSize[i];
-                  this.centerer = gridSize/2;
-                  this.x = mobX[i] + this.centerer;
-                  this.y = mobY[i] + this.centerer;
-                  
-                  stroke(5);
-                  strokeWeight(1);
-                  fill(77, 147, 168);
-                  ellipse(this.x,this.y,this.size);
+                    this.size = mobSize[i];
+                    this.centerer = gridSize / 2;
+                    this.x = mobX[i] + this.centerer;
+                    this.y = mobY[i] + this.centerer;
+
+                    stroke(5);
+                    strokeWeight(1);
+                    fill(77, 147, 168);
+                    ellipse(this.x, this.y, this.size);
                 }
             };
         }
         //Function that Deletes Mobs
         function mobDelete() {
-          for (var i = 0; i < mobAmt; i++) {
-            if (mobX[i] === gridX[endX] && mobY[i] === gridY[endY] || mobHealth[i] <= 0) {
-              mobX.splice(i,1);
-              mobY.splice(i,1);
-              mobType.splice(i,1);
-              mobHealth.splice(i,1);
-              mobSpeed.splice(i,1);
-              mobSize.splice(i,1);
-              mobSteps.splice(i,1);
-              mobAmt--;
+            for (var i = 0; i < mobAmt; i++) {
+                if (mobX[i] === gridX[endX] && mobY[i] === gridY[endY] || mobHealth[i] <= 0) {
+                    mobX.splice(i, 1);
+                    mobY.splice(i, 1);
+                    mobType.splice(i, 1);
+                    mobHealth.splice(i, 1);
+                    mobSpeed.splice(i, 1);
+                    mobSize.splice(i, 1);
+                    mobSteps.splice(i, 1);
+                    mobAmt--;
+                }
             }
-          }
         }
         //TOWERS WOWOWOOWO
         function towers() {
             this.size = 5;
-            this.centerer = gridSize/2;
-            this.place = function() {
+            this.centerer = gridSize / 2;
+            this.place = function () {
                 if (isSelected === true && budget >= baseTowers[keyNumSelectT].cost && selected === 0) {
                     towerX.push(selectX);
                     towerY.push(selectY);
@@ -572,39 +667,63 @@
                     towerType.push(keyNumSelectT);
                     towerDam.push(baseTowers[keyNumSelectT].damage);
                     towerRange.push(baseTowers[keyNumSelectT].range);
+                    towerROFInc.push(0);
                     towerROF.push(baseTowers[keyNumSelectT].rof);
                     towerAmt++;
                     budget -= baseTowers[keyNumSelectT].cost;
                     isSelected = false;
                 }
             };
-            this.show = function() {
+            this.show = function () {
                 for (var i = 0; i < towerAmt; i++) {
                     this.x = gridX[towerX[i]] + this.centerer;
                     this.y = gridY[towerY[i]] + this.centerer;
-                    fill(255,0,0);
+                    fill(255, 0, 0);
                     stroke(0);
                     strokeWeight(1);
-                    ellipse(this.x,this.y,this.size);
+                    ellipse(this.x, this.y, this.size);
                     var type = towerType[i];
-                    if (isSelected === true && selected === 99 + type && selectX === towerX[i] && selectY === towerY[i]) {
-                        fill(114,114,114,80);
+                    if (isSelected === true && selected === 99 + type && selectX === towerX[i] && selectY ===
+                        towerY[i]) {
+                        fill(114, 114, 114, 80);
                         strokeWeight(0);
-                        ellipse(this.x,this.y,baseTowers[type].range);
+                        ellipse(this.x, this.y, baseTowers[type].range);
                     } else {
                         noFill();
                         noStroke()
-                        ellipse(this.x,this.y,baseTowers[type].range);
+                        ellipse(this.x, this.y, baseTowers[type].range);
                     }
                 }
             };
-            this.detect = function() {
+            this.detect = function () {
                 for (var i = 0; i < mobAmt; i++) {
-                    var tx = gridX[towerX[i]] + this.centerer;
-                    var ty = gridY[towerY[i]] + this.centerer;
-                    var detect = collide
+                    mobDetect.push(false);
+                    for (var ii = 0; ii < towerAmt; ii++) {
+                        var tx = gridX[towerX[ii]] + this.centerer;
+                        var ty = gridY[towerY[ii]] + this.centerer;
+                        detect = collideCircleCircle(mobX[i], mobY[i], mobSize[i], tx, ty, towerRange[ii]);
+                        mobDetect[i] = detect;
+                        towerDetect[ii] = detect;
+                        if (towerDetect[ii] === true && mobDetect[i] === true) {
+                            fill(0, 0, 0, 100);
+                            strokeWeight(1);
+                            if (towerROF[ii] === towerROFInc[ii]) {
+                                strokeWeight(5);
+                                mobHealth[i] -= towerDam[ii];
+                                towerROFInc[ii] = 0;
+                            } else if (towerROF[ii] > towerROFInc[ii]) {
+                                towerROFInc[ii]++;
+                            }
+                            line(tx, ty, mobX[i] + gridSize / 2, mobY[i] + gridSize / 2);
+                        } else if (towerDetect[ii] === false && mobDetect[i] === false) {
+                            towerROFInc[ii] = 0;
+                        }
+                    }
                 }
-            }
+                if (mobDetect.length > mobAmt) {
+                    mobDetect.pop();
+                }
+            };
         }
     </script>
     <style>
@@ -613,6 +732,7 @@
             top: 10px;
             left: 200px;
         }
+
         #title {
             position: absolute;
             top: 40px;
@@ -620,6 +740,7 @@
             z-index: 1;
             user-select: none;
         }
+
         #credit {
             position: absolute;
             top: 80px;
@@ -627,6 +748,7 @@
             z-index: 1;
             user-select: none;
         }
+
         #bttnPlay {
             position: absolute;
             top: 122px;
@@ -634,6 +756,7 @@
             z-index: 1;
             user-select: none;
         }
+
         #infoPanelTitle {
             width: 183px;
             height: 50px;
@@ -646,6 +769,7 @@
             position: absolute;
             top: 10px;
         }
+
         #infoPanel {
             width: 163px;
             background-color: rgba(80, 80, 80, 0.5);
@@ -658,6 +782,7 @@
             position: absolute;
             top: 67px;
         }
+
         #interactPanel {
             width: 183px;
             height: 539px;
@@ -668,6 +793,7 @@
             left: 750px;
             top: 10px;
         }
+
         #bttnWave {
             visibility: hidden;
             position: absolute;
@@ -675,6 +801,7 @@
             top: 510px;
             user-select: none;
         }
+
         #waves {
             position: absolute;
             font-size: 30px;
@@ -682,6 +809,7 @@
             left: 5px;
             user-select: none;
         }
+
         #budget {
             position: absolute;
             font-size: 30px;
@@ -689,6 +817,7 @@
             left: 5px;
             user-select: none;
         }
+
         #lives {
             position: absolute;
             font-size: 30px;
@@ -697,9 +826,22 @@
             user-select: none;
         }
 
-        #dump {
+        #endTitle {
             position: absolute;
-            top: 620px;
+            top: 40px;
+            left: 210px;
+            z-index: 1;
+            visibility: hidden;
+            user-select: none;
+        }
+
+        #bttnRestart {
+            position: absolute;
+            top: 122px;
+            left: 210px;
+            z-index: 1;
+            visibility: hidden;
+            user-select: none;
         }
     </style>
 </head>
@@ -721,7 +863,8 @@
         <p id="lives"></p>
         <button onclick="beginWave()" id="bttnWave">Begin Wave</button>
     </div>
-    <h1 id="dump"></h1>
+    <h1 id="endTitle"></h1>
+    <button id="bttnRestart" onclick="restart()">Restart</button>
 </body>
 
 </html>
