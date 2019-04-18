@@ -408,7 +408,7 @@
             d.getElementById('budget').innerHTML = "Points - " + budget;
             d.getElementById('lives').innerHTML = "Lives - " + baseHealth;
             d.getElementById('buffAt').innerHTML = "Next Buff - " + mobBuffInc;
-            d.getElementById('buffNow').innerHTML = "Buff - " + mobBuff;
+            d.getElementById('buffNow').innerHTML = "Buff - " + mobBuff.toFixed(1);
             //------------------------------------------------------------------------------Ending
             if (isGameStart === false && gamePhase >= 0) {
                 d.getElementById('interactPanel').style.visibility = "hidden";
