@@ -3,6 +3,7 @@
 <head>
     <script src="p5/p5.min.js"></script>
     <script src="p5/p5.collide2D.min.js"></script>
+    <script language="javascript" type="text/javascript" src="path/to/p5.sound.js"></script>
     <script>
         //OTHER VARIABLES
         var d = document;
@@ -30,6 +31,7 @@
         var selectX = 0;
         var selectY = 0;
         var isSelected = false;
+        var clickSound;
         var selected = -1;
         //START POINT
         var startX = 0;
@@ -131,8 +133,10 @@
         var towers = new towers();
         //Preload Stuff
         function preload() {
+            soundFormats('wav');
             imgStart = loadImage('portal.png');
             imgEnd = loadImage('base.png');
+            clickSound = loadSound('192272_lebaston100_click.wav');
         }
         //Main setup function for p5
         function setup() {
@@ -431,6 +435,8 @@
         }
         //REGISTERING CLICK
         function mousePressed() {
+            clickSound.setVolume(0.8);
+            clickSound.play();
             mouseClick = true;
         }
 
