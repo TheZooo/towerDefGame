@@ -714,7 +714,7 @@
                         mobDetect[i] = collideCircleCircle(mx,my,mobSize[i],tx,ty,towerRange[ii]);
                         towerDetect[ii] = collideCircleCircle(mx,my,mobSize[i],tx,ty,towerRange[ii]);
                         if (towerDetect[ii] === true && mobDetect[i] === true) {
-                            stroke(0,0,0,50);
+                            stroke(40);
                             strokeWeight(0);
                             if (towerROF[ii] === towerROFInc[ii]) {
                                 strokeWeight(3);
