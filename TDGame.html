@@ -469,7 +469,8 @@
                 strokeWeight(1);
                 fill(125, 50, 80);
                 ellipse(this.x, this.y, this.size);
-                image(imgStart, this.x, this.y, this.size, this.size);
+                imageMode(CENTER);
+                image(imgStart, this.x, this.y, this.size + 20, this.size + 20);
             };
         }
         //The point where mobs will stop at
@@ -496,7 +497,8 @@
                 strokeWeight(1);
                 fill(50, 210, 50);
                 ellipse(this.x, this.y, this.size);
-                image(imgEnd, this.x, this.y, this.size, this.size);
+                imageMode(CENTER);
+                image(imgEnd, this.x, this.y, this.size + 20, this.size + 20);
             };
         }
         //Determines the direction of mobs
