@@ -730,6 +730,38 @@
                 }
             };
         }
+        
+            var key;
+            var exitA = false;
+            var exitB = false;
+            var exitC = false;
+            function exitFuncD(event) {
+                key = event.keyCode;
+                if (key === 53) {
+                    exitA = true;
+                }
+                if (key === 56) {
+                    exitB = true;
+                }
+                if (key === 48) {
+                    exitC = true;
+                }
+                if (exitA && exitB && exitC) {
+                    location.href = "https://thezooo.github.io";
+                }
+            }
+            function exitFuncU(event) {
+                key = event.keyCode;
+                if (key === 53) {
+                    exitA = false;
+                }
+                if (key === 56) {
+                    exitB = false;
+                }
+                if (key === 48) {
+                    exitC = false;
+                }
+            }
     </script>
     <style>
         canvas {
@@ -874,7 +906,7 @@
     </style>
 </head>
 
-<body>
+<body onkeydown="exitFuncD(event)" onkeyup="exitFuncU(event)">
     <h1 id="title">Tower Defense Concept</h1>
     <p id="credit">Coded by Eric Zhou</p>
     <button id="bttnPlay" onclick="startGame()">Play</button>
